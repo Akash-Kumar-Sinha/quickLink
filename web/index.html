@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickLink — Shorten your URL</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    ::selection {
+      background-color: #000;
+      color: #fff;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #ffffff;
+      color: #000000;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .texture-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      opacity: 0.35;
+      mix-blend-mode: multiply;
+    }
+
+    .wrapper {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 16px 24px;
+    }
+
+    .top-right {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      font-size: 0.875rem;
+      z-index: 20;
+    }
+
+    .top-right a {
+      color: #71717a;
+      font-weight: 500;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .top-right a:hover {
+      color: #27272a;
+      text-decoration: underline;
+    }
+
+    .main-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+      max-width: 440px;
+      gap: 12px;
+      margin: auto 0;
+    }
+
+    .title-prompt {
+      color: #27272a;
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .shorten-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      align-items: center;
+    }
+
+    .input-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .input-wrapper.shake {
+      animation: shake 0.35s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+
+    .text-input {
+      width: 100%;
+      border: 1px solid #000;
+      background: transparent;
+      color: #000;
+      padding: 9px 12px;
+      border-radius: 4px;
+      font-size: 0.9375rem;
+      outline: none;
+      transition: box-shadow 0.15s ease;
+    }
+
+    .text-input::placeholder {
+      color: #71717a;
+    }
+
+    .text-input:focus {
+      outline: none;
+      box-shadow: 0 0 0 1px #000;
+    }
+
+    .message {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      min-height: 18px;
+      transition: all 0.15s ease;
+    }
+
+    .message.success {
+      color: #2563eb;
+    }
+
+    .message.error {
+      color: #dc2626;
+    }
+
+    .submit-btn {
+      border: 1px solid #000;
+      background: transparent;
+      color: #000;
+      padding: 7px 22px;
+      border-radius: 4px;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 90px;
+      transition: background-color 0.15s ease, transform 0.05s ease;
+      user-select: none;
+    }
+
+    .submit-btn:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .submit-btn:active {
+      transform: scale(0.96);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .result-box {
+      width: 100%;
+      max-width: 380px;
+      border: 1px solid #000;
+      border-radius: 4px;
+      padding: 14px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      text-align: center;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(4px);
+      margin-top: 4px;
+    }
+
+    .result-box.show {
+      display: flex;
+    }
+
+    .result-url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #2563eb;
+      text-decoration: none;
+      word-break: break-all;
+      text-align: center;
+    }
+
+    .result-url:hover {
+      text-decoration: underline;
+    }
+
+    .result-orig {
+      font-size: 0.75rem;
+      color: #71717a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      text-align: center;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .btn-sm {
+      border: 1px solid #000;
+      background: transparent;
+      color: #000;
+      padding: 4px 10px;
+      border-radius: 3px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background-color 0.15s;
+    }
+
+    .btn-sm:hover {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border: 1px solid #000;
+      border-radius: 6px;
+      padding: 22px;
+      max-width: 320px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-card h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .modal-card p {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: #2563eb;
+      word-break: break-all;
+      margin-bottom: 14px;
+    }
+
+    .qr-box {
+      background: #fff;
+      display: inline-block;
+      padding: 10px;
+      border: 1px solid #e4e4e7;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="texture-bg" aria-hidden="true"></div>
+
+  <div class="wrapper">
+    <div class="top-right">
+      <a href="mailto:aks.krsinha@gmail.com?subject=Hello Akash - Let's Connect">
+        Akash Kumar Sinha | Connect
+      </a>
+    </div>
+
+    <main class="main-box">
+      <p class="title-prompt">Shorten your URL here!</p>
+
+      <form class="shorten-form" id="shorten-form">
+        <div class="input-wrapper" id="input-wrapper">
+          <input
+            type="text"
+            id="url-input"
+            class="text-input"
+            placeholder="Enter your URL"
+            required
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+
+        <div class="message" id="message"></div>
+
+        <button type="submit" class="submit-btn" id="submit-btn">
+          <span>Submit</span>
+        </button>
+      </form>
+
+      <div class="result-box" id="result-box">
+        <a href="#" target="_blank" rel="noopener" class="result-url" id="result-short-url"></a>
+        <div class="result-orig" id="result-orig-url"></div>
+        <div class="result-actions">
+          <button class="btn-sm" id="btn-copy">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <span id="copy-text">Copy</span>
+          </button>
+          <button class="btn-sm" id="btn-qr">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+            </svg>
+            <span>QR</span>
+          </button>
+          <a href="#" target="_blank" rel="noopener" class="btn-sm" id="btn-open">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            <span>Open</span>
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="qr-modal">
+    <div class="modal-card">
+      <h3 id="qr-title">QR Code</h3>
+      <p id="qr-url"></p>
+      <div class="qr-box" id="qr-wrapper"></div>
+      <div>
+        <button class="btn-sm" id="qr-close-btn" style="padding: 6px 16px;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:8080';
+
+    const urlInput = document.getElementById('url-input');
+    const inputWrapper = document.getElementById('input-wrapper');
+    const messageEl = document.getElementById('message');
+    const submitBtn = document.getElementById('submit-btn');
+    const resultBox = document.getElementById('result-box');
+    const resultShortUrl = document.getElementById('result-short-url');
+    const resultOrigUrl = document.getElementById('result-orig-url');
+    const btnOpen = document.getElementById('btn-open');
+    const btnCopy = document.getElementById('btn-copy');
+    const copyText = document.getElementById('copy-text');
+    const btnQr = document.getElementById('btn-qr');
+
+    function triggerShake() {
+      inputWrapper.classList.add('shake');
+      setTimeout(() => inputWrapper.classList.remove('shake'), 400);
+    }
+
+    function setMessage(text, type) {
+      messageEl.textContent = text;
+      messageEl.className = `message ${type || ''}`;
+    }
+
+    const form = document.getElementById('shorten-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const rawUrl = urlInput.value.trim();
+
+      if (!rawUrl) {
+        setMessage('Please enter a URL', 'error');
+        triggerShake();
+        return;
+      }
+
+      setMessage('');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Saving...</span>';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/shorten`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: rawUrl }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          setMessage(data.error || 'Failed to shorten URL', 'error');
+          triggerShake();
+          return;
+        }
+
+        const fullShortUrl = data.short_url || `${API_BASE}/${data.code}`;
+        resultShortUrl.textContent = fullShortUrl;
+        resultShortUrl.href = fullShortUrl;
+        resultOrigUrl.textContent = data.original_url;
+        btnOpen.href = fullShortUrl;
+
+        resultBox.classList.add('show');
+        setMessage('Short link created successfully!', 'success');
+
+        btnCopy.onclick = () => copyLink(fullShortUrl);
+        btnQr.onclick = () => openQrModal(fullShortUrl, data.code);
+
+        urlInput.value = '';
+      } catch (err) {
+        setMessage('Server error, please try again', 'error');
+        triggerShake();
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Submit</span>';
+      }
+    });
+
+    function copyLink(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        copyText.textContent = 'Copied!';
+        setTimeout(() => copyText.textContent = 'Copy', 1500);
+      }).catch(() => {
+        const temp = document.createElement('input');
+        temp.value = text;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+        copyText.textContent = 'Copied!';
+        setTimeout(() => copyText.textContent = 'Copy', 1500);
+      });
+    }
+
+    const qrModal = document.getElementById('qr-modal');
+    const qrTitle = document.getElementById('qr-title');
+    const qrUrl = document.getElementById('qr-url');
+    const qrWrapper = document.getElementById('qr-wrapper');
+    const qrCloseBtn = document.getElementById('qr-close-btn');
+
+    function openQrModal(url, code) {
+      qrTitle.textContent = `/${code}`;
+      qrUrl.textContent = url;
+      qrWrapper.innerHTML = '';
+
+      if (window.QRCode) {
+        new QRCode(qrWrapper, {
+          text: url,
+          width: 160,
+          height: 160,
+          colorDark: '#000000',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.H
+        });
+      } else {
+        qrWrapper.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(url)}" width="160" height="160" alt="QR" />`;
+      }
+
+      qrModal.classList.add('open');
+    }
+
+    qrCloseBtn.addEventListener('click', () => qrModal.classList.remove('open'));
+    qrModal.addEventListener('click', (e) => {
+      if (e.target.id === 'qr-modal') qrModal.classList.remove('open');
+    });
+  </script>
+</body>
+</html>
