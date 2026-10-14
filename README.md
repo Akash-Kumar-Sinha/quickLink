@@ -12,7 +12,7 @@ A minimalist URL shortener with Redis caching and an embedded single-page UI.
 
 2. Run the server:
    ```bash
-   go run ./cmd/server
+   go run ./cmd/server/main.go
    ```
 
 The app will be available at `http://localhost:8080`.
