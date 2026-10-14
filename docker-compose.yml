@@ -1,7 +1,7 @@
 services:
   quicklink:
     container_name: quicklink
-    image: quicklink:latest
+    image: akashkumarsinha/quicklink:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -15,6 +15,6 @@ services:
 
   redis:
     container_name: redis
-    image: redis:latest
+    image: redis:alpine
     ports:
       - "6379:6379"

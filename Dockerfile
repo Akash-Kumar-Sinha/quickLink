@@ -9,15 +9,9 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o quicklink ./cmd/server/main.go
 
-FROM alpine:latest
+FROM scratch
 
-RUN addgroup -S appuser && adduser -S appuser -G appuser
-
-WORKDIR /app
-
-COPY --from=builder --chown=appuser:appuser /app/quicklink ./quicklink
-
-USER appuser
+COPY --from=builder /app/quicklink /quicklink
 
 EXPOSE 8080
 
